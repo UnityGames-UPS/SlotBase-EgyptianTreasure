@@ -1,1 +1,1 @@
-# SlotBase-EgyptianTreasure
+# Slot-Egyptian-Treasures
