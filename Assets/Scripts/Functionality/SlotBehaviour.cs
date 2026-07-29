@@ -514,6 +514,62 @@ public class SlotBehaviour : MonoBehaviour
         }
     }
 
+    internal void UpdateBalanceDisplay(double newBalance)
+    {
+        currentBalance = newBalance;
+        if (Balance_text) Balance_text.text = newBalance.ToString("f3");
+        CompareBalance();
+    }
+
+    // Backend sent a "balance is low" socket error instead of the expected balance:sync push —
+    // this arrives as the response to a SPIN request, which means it lands while TweenRoutine is
+    // frozen at its `WaitUntil(isResultdone)`, with every side effect it already applied before
+    // that point (reel-spin tweens, sun anim, spin SFX loop, the optimistic balance-deduction
+    // tween, disabled buttons) still live — stopping the coroutine alone does not unwind any of
+    // that. Reset every one of those in place, then show the low-balance popup, instead of
+    // treating this like a generic/session-expired error (which would exit to the platform and
+    // force the player to refresh).
+    internal void ForceStopForLowBalance()
+    {
+        if (AutoSpinRoutine != null) StopCoroutine(AutoSpinRoutine);
+        if (FreeSpinRoutine != null) StopCoroutine(FreeSpinRoutine);
+        if (tweenroutine != null) StopCoroutine(tweenroutine);
+        AutoSpinRoutine = null;
+        FreeSpinRoutine = null;
+        tweenroutine = null;
+
+        // Undo TweenRoutine's pre-result side effects: the looping reel-spin tweens, the sun
+        // animation, the spin SFX loop, and the optimistic bet-deduction tween/text (the server
+        // never confirmed the spin, so the real balance is whatever SocketManager still holds).
+        KillAllTweens();
+        ScoreTween?.Kill();
+        if (Balance_text) Balance_text.text = SocketManager.PlayerData.balance.ToString("f3");
+        if (uiManager) uiManager.StopSunAnim();
+        if (StopSpin_Button) StopSpin_Button.gameObject.SetActive(false);
+        if (audioController) audioController.StopWLAaudio();
+        StopSpinToggle = false;
+        CheckSpinAudio = false;
+
+        IsAutoSpin = false;
+        IsSpinning = false;
+        IsFreeSpin = false;
+
+        if (AutoSpinStop_Button) AutoSpinStop_Button.gameObject.SetActive(false);
+        if (AutoSpin_Button) AutoSpin_Button.gameObject.SetActive(true);
+
+        // Same end-state StopAutoSpinCoroutine leaves behind: ToggleButtonGrp(true) re-enables
+        // everything, then AutoSpin/AutoStartMinus are pulled back to non-interactable since the
+        // auto-spin counter is being reset to 0 here too.
+        ToggleButtonGrp(true);
+        if (AutoSpin_Button) AutoSpin_Button.interactable = false;
+        if (AutoStartMinus_Button) AutoStartMinus_Button.interactable = false;
+        AutoSpinCounter = 0;
+        AutoSpinNum = 0;
+        if (AutoSpin_Text) AutoSpin_Text.text = AutoSpinNum.ToString();
+
+        uiManager.LowBalPopup();
+    }
+
     //function to populate animation sprites accordingly
     private void PopulateAnimationSprites(ImageAnimation animScript, int val)
     {
@@ -625,7 +681,8 @@ public class SlotBehaviour : MonoBehaviour
 
     private void OnApplicationFocus(bool focus)
     {
-        audioController.CheckFocusFunction(focus, CheckSpinAudio);
+        audioController.SetMuteAll(!focus);
+        if (focus && !CheckSpinAudio) audioController.StopWLAaudio();
     }
 
     // internal void shuffleInitialMatrix()
@@ -1009,7 +1066,6 @@ public class SlotBehaviour : MonoBehaviour
 
     private void CheckPayoutLineBackend(List<int> LineId, double jackpot = 0)
     {
-        List<int> y_points = null;
         if (LineId.Count > 0)
         {
             if (jackpot <= 0)
