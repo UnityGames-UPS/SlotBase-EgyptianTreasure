@@ -161,6 +161,7 @@ public class SocketIOManager : MonoBehaviour
     options.ConnectWith = Best.SocketIO.Transports.TransportTypes.WebSocket; //
 
 #if UNITY_WEBGL && !UNITY_EDITOR
+        JSManager.RegisterAuthTokenListener(gameObject.name); // listen for host's TokenReceived before asking
         JSManager.SendCustomMessage("authToken");
         StartCoroutine(WaitForAuthToken(options));
 #else
@@ -542,7 +543,7 @@ public class SocketIOManager : MonoBehaviour
           }
           // Application.ExternalCall("window.parent.postMessage", "onExit", "*");
 #if UNITY_WEBGL && !UNITY_EDITOR
-                        JSManager.SendCustomMessage("onExit");
+                        JSManager.SendCustomMessage("OnExit"); // was "onExit" — host matches "OnExit"
 #endif
           break;
         }
