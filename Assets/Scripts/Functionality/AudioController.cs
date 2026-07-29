@@ -20,7 +20,7 @@ public class AudioController : MonoBehaviour
 
     private void Awake()
     {
-        allSources = new List<AudioSource> { bg_adudio, audioPlayer_wl, audioPlayer_button, audioSpin_button };
+        allSources = new List<AudioSource> { bg_adudio, audioPlayer_wl, audioPlayer_button, audioSpin_button, bg_audioBonus, audioPlayer_Bonus };
     }
 
     private void Start()
