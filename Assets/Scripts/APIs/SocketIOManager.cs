@@ -233,7 +233,6 @@ public class SocketIOManager : MonoBehaviour
     gameSocket.On<ConnectResponse>(SocketIOEventTypes.Connect, OnConnected);
     gameSocket.On(SocketIOEventTypes.Disconnect, OnDisconnected); //Back2 Start
     gameSocket.On<Error>(SocketIOEventTypes.Error, OnError);
-    gameSocket.On<string>(SocketIOEventTypes.Error, OnError);
     gameSocket.On<string>("game:init", OnListenEvent);
     gameSocket.On<string>("result", OnResult);
     //gameSocket.On<string>("gamble:result", OnGameResult);
