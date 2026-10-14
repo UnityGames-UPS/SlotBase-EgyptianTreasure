@@ -166,7 +166,7 @@ public class SlotBehaviour : MonoBehaviour
 
 
 
-    public static List<List<int>> initialGrid = new List<List<int>>()
+    private static List<List<int>> initialGrid = new List<List<int>>()
     {
         new List<int>() { 8, 1, 7},
         new List<int>() { 10, 8, 7},
@@ -174,7 +174,7 @@ public class SlotBehaviour : MonoBehaviour
         new List<int>() { 10, 8, 7},
         new List<int>() { 8, 10, 7}
     };
-    public static List<List<int>> initialAnimGrid = new List<List<int>>()
+    private static List<List<int>> initialAnimGrid = new List<List<int>>()
     {
         new List<int>() { 10, 10, 10},
         new List<int>() { 10, 10, 10},
